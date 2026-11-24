@@ -53,8 +53,8 @@ pipeline {
                     docker run -d \
                         --name "$APP_NAME" \
                         --restart unless-stopped \
-                        --add-host=host.docker.internal:host-gateway \
-                        -e DB_HOST=host.docker.internal \
+                        --network host \
+                        -e DB_HOST=127.0.0.1 \
                         -e DB_PORT=3306 \
                         -e DB_NAME="$DB_NAME" \
                         -e DB_USER="$DB_USER" \
@@ -62,7 +62,6 @@ pipeline {
                         -e SERVER_PORT="$APP_PORT" \
                         -e RABBITMQ_ENABLED=false \
                         -e spring.profiles.active=dev \
-                        -p "$APP_PORT:$APP_PORT" \
                         "$IMAGE_NAME"
                 '''
             }
