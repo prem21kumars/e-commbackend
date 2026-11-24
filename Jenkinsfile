@@ -7,12 +7,18 @@ pipeline {
     }
 
     environment {
-        APP_NAME = 'e-comm-backend'
-        IMAGE_NAME = 'e-comm-backend:latest'
-        APP_PORT = '8002'
-        DB_NAME = 'e-comm'
-        DB_USER = 'e-comm'
-        DB_PASSWORD = 'Pass@123'
+        APP_NAME        = 'e-comm-backend'
+        IMAGE_NAME      = 'e-comm-backend:latest'
+        APP_PORT        = '8002'
+        DOCKER_NETWORK  = 'jenkins-mysql_default'
+
+        DB_HOST         = 'mysql-8081'
+        DB_PORT         = '3306'
+        DB_NAME         = 'e-comm'
+        DB_USER         = 'e-comm'
+        DB_PASSWORD     = 'Pass@123'
+
+        DB_URL          = "jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8"
     }
 
     stages {
@@ -48,14 +54,20 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                 sh '''
+                    # Stop previous container if running
                     docker rm -f "$APP_NAME" || true
 
+                    # Start new container on the MySQL Docker network
                     docker run -d \
                         --name "$APP_NAME" \
                         --restart unless-stopped \
-                        --network host \
-                        -e DB_HOST=127.0.0.1 \
-                        -e DB_PORT=3306 \
+                        --network "$DOCKER_NETWORK" \
+                        -p "$APP_PORT:8002" \
+                        -e SPRING_DATASOURCE_URL="$DB_URL" \
+                        -e SPRING_DATASOURCE_USERNAME="$DB_USER" \
+                        -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
+                        -e DB_HOST="$DB_HOST" \
+                        -e DB_PORT="$DB_PORT" \
                         -e DB_NAME="$DB_NAME" \
                         -e DB_USER="$DB_USER" \
                         -e DB_PASSWORD="$DB_PASSWORD" \
