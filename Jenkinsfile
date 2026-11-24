@@ -54,14 +54,10 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                 sh '''
-                    # 1. Ensure e-comm database and user permissions exist in mysql-8081
-                    docker exec -i mysql-8081 mysql -u root -pAppSecure_2026_X9! -e "CREATE DATABASE IF NOT EXISTS \\\`$DB_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON \\\`$DB_NAME\\\`.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES;" 2>/dev/null || \
-                    docker exec -i mysql-8081 mysql -u root -e "CREATE DATABASE IF NOT EXISTS \\\`$DB_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON \\\`$DB_NAME\\\`.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES;" 2>/dev/null || true
-
-                    # 2. Stop previous container if running
+                    # Stop previous container if running
                     docker rm -f "$APP_NAME" || true
 
-                    # 3. Start new container on the MySQL Docker network
+                    # Start new container on the MySQL Docker network
                     docker run -d \
                         --name "$APP_NAME" \
                         --restart unless-stopped \
