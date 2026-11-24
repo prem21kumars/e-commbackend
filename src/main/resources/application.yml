@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: enterprise-ecommerce-backend
+  profiles:
+    active: dev
+
+server:
+  port: 8002
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+# Application Custom Config
+app:
+  api:
+    version: v1
+    prefix: /api/v1
+  cors:
+    allowed-origins:
+      - "http://localhost:5173"
+      - "http://localhost:5174"
+      - "http://localhost:5175"
+      - "http://localhost:3000"
+      - "http://127.0.0.1:5173"
+      - "http://127.0.0.1:5174"
+      - "http://127.0.0.1:5175"
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+    max-age: 3600
+  jwt:
+    secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+    access-token-expiration-ms: 900000 # 15 minutes
+    refresh-token-expiration-ms: 604800000 # 7 days
+    issuer: "ecommerce-api"
+  security:
+    argon2:
+      salt-length: 16
+      hash-length: 32
+      parallelism: 1
+      memory: 65536 # 64MB
+      iterations: 3
+    account-lockout:
+      max-failed-attempts: 5
+      lockout-duration-minutes: 30
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID:rzp_test_placeholder}
+    key-secret: ${RAZORPAY_KEY_SECRET:placeholder_secret}
+    webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:placeholder_webhook_secret}
+    currency: "INR"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+    display-request-duration: true
+

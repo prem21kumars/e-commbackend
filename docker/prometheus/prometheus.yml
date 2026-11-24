@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'spring-boot-ecommerce'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'host.docker.internal:8080'
+          - 'backend-1:8080'
+          - 'backend-2:8080'
+          - 'backend-3:8080'
+        labels:
+          application: 'enterprise-ecommerce-backend'
+

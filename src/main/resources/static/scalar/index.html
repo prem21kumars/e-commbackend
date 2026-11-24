@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Enterprise E-Commerce - Scalar API Reference & Development Console</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="https://scalar.com/favicon.svg" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Scalar API Reference Root Element -->
+    <div id="app"></div>
+
+    <!-- Standalone Scalar API Reference CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+
+    <script>
+      Scalar.createApiReference('#app', {
+        url: '/v3/api-docs',
+        theme: 'purple',
+        darkMode: true,
+        layout: 'modern',
+        hideDownloadButton: false,
+        hideTestRequestButton: false,
+        searchHotKey: 'k',
+        defaultHttpClient: {
+          target: 'shell',
+          client: 'curl',
+        },
+        authentication: {
+          preferredSecurityScheme: 'bearerAuth',
+        },
+      });
+    </script>
+  </body>
+</html>
+
