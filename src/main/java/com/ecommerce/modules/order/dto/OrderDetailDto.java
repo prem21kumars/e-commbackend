@@ -34,5 +34,7 @@ public class OrderDetailDto {
     private Instant createdAt;
     private List<OrderItemDto> items;
     private String razorpayOrderId;
+    private String paymentMethod;
+    private String paymentStatus;
 }
 

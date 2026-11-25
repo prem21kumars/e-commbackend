@@ -21,6 +21,7 @@ import com.ecommerce.modules.order.repository.OrderRepository;
 import com.ecommerce.modules.order.service.OrderService;
 import com.ecommerce.modules.product.entity.Product;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ecommerce.modules.payment.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +59,8 @@ class OrderServiceTest {
     private InventoryService inventoryService;
     @Mock
     private CouponService couponService;
+    @Mock
+    private PaymentRepository paymentRepository;
     @Mock
     private ObjectMapper objectMapper;
 
@@ -112,6 +115,34 @@ class OrderServiceTest {
 
         verify(inventoryService).reserveStock(100L, 2, null);
         verify(cartItemRepository).deleteByCartId(5L);
+    }
+
+    @Test
+    @DisplayName("Create COD order sets status CONFIRMED and records CASH_ON_DELIVERY payment")
+    void testCreateCodOrderSuccess() throws Exception {
+        CreateOrderRequest req = CreateOrderRequest.builder()
+                .shippingAddressId(10L)
+                .paymentMethod("CASH_ON_DELIVERY")
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserIdWithItems(1L)).thenReturn(Optional.of(cart));
+        when(addressRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(address));
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"city\":\"Bengaluru\"}");
+        when(inventoryService.reserveStock(100L, 2, null)).thenReturn("res-token-123");
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> {
+            Order o = i.getArgument(0);
+            o.setId(101L);
+            return o;
+        });
+
+        OrderDetailDto res = orderService.createOrder(1L, req);
+
+        assertNotNull(res);
+        assertEquals(OrderStatus.CONFIRMED, res.getStatus());
+        assertEquals("CASH_ON_DELIVERY", res.getPaymentMethod());
+        assertEquals("PENDING", res.getPaymentStatus());
+        verify(paymentRepository).save(any());
     }
 
     @Test

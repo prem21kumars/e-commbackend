@@ -30,6 +30,8 @@ public class AdminOrderDto {
     private int itemCount;
     private String shippingAddressSnapshot;
     private List<OrderItemDto> items;
+    private String paymentMethod;
+    private String paymentStatus;
     private Instant createdAt;
 }
 

@@ -18,5 +18,7 @@ public class CreateOrderRequest {
     private Long billingAddressId;
 
     private String couponCode;
+
+    private String paymentMethod;
 }
 

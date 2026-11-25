@@ -1,4 +1,4 @@
-package com.ecommerce.modules.order.service;
+    package com.ecommerce.modules.order.service;
 
 import com.ecommerce.common.exception.BadRequestException;
 import com.ecommerce.common.exception.ForbiddenException;
@@ -20,6 +20,10 @@ import com.ecommerce.modules.order.entity.OrderItem;
 import com.ecommerce.modules.order.entity.OrderStatus;
 import com.ecommerce.modules.order.repository.OrderItemRepository;
 import com.ecommerce.modules.order.repository.OrderRepository;
+import com.ecommerce.modules.payment.entity.Payment;
+import com.ecommerce.modules.payment.entity.PaymentMethod;
+import com.ecommerce.modules.payment.entity.PaymentStatus;
+import com.ecommerce.modules.payment.repository.PaymentRepository;
 import com.ecommerce.modules.product.entity.Product;
 import com.ecommerce.modules.product.entity.ProductImage;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -54,6 +58,7 @@ public class OrderService {
     private final InventoryService inventoryService;
     private final CouponService couponService;
     private final ObjectMapper objectMapper;
+    private final PaymentRepository paymentRepository;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -134,10 +139,16 @@ public class OrderService {
 
         String orderNumber = generateOrderNumber();
 
+        boolean isCod = request.getPaymentMethod() != null &&
+                (request.getPaymentMethod().toUpperCase().contains("CASH") ||
+                 request.getPaymentMethod().toUpperCase().contains("COD"));
+
+        OrderStatus initialStatus = isCod ? OrderStatus.CONFIRMED : OrderStatus.PAYMENT_PENDING;
+
         Order order = Order.builder()
                 .orderNumber(orderNumber)
                 .user(user)
-                .status(OrderStatus.PAYMENT_PENDING)
+                .status(initialStatus)
                 .subtotal(subtotal)
                 .taxAmount(taxAmount)
                 .shippingFee(shippingFee)
@@ -168,6 +179,19 @@ public class OrderService {
         }
         orderItemRepository.saveAll(orderItems);
         savedOrder.setItems(orderItems);
+
+        // Record payment transaction
+        PaymentMethod pm = isCod ? PaymentMethod.CASH_ON_DELIVERY : PaymentMethod.RAZORPAY;
+        Payment payment = Payment.builder()
+                .order(savedOrder)
+                .paymentMethod(pm)
+                .status(PaymentStatus.PENDING)
+                .amount(savedOrder.getTotalAmount())
+                .currency("INR")
+                .gatewayOrderId(isCod ? ("COD-" + orderNumber) : ("sim_" + orderNumber))
+                .build();
+        paymentRepository.save(payment);
+        savedOrder.getPayments().add(payment);
 
         // Clear the user's cart
         cartItemRepository.deleteByCartId(cart.getId());
@@ -284,6 +308,14 @@ public class OrderService {
         String customerEmail = u != null ? u.getEmail() : "";
         String customerPhone = u != null ? u.getPhoneNumber() : "";
 
+        String paymentMethod = "CASH_ON_DELIVERY";
+        String paymentStatus = "PENDING";
+        if (order.getPayments() != null && !order.getPayments().isEmpty()) {
+            Payment p = order.getPayments().getFirst();
+            paymentMethod = p.getPaymentMethod() != null ? p.getPaymentMethod().name() : "CASH_ON_DELIVERY";
+            paymentStatus = p.getStatus() != null ? p.getStatus().name() : "PENDING";
+        }
+
         return AdminOrderDto.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
@@ -299,6 +331,8 @@ public class OrderService {
                 .customerPhone(customerPhone)
                 .itemCount(order.getItems() != null ? order.getItems().size() : 0)
                 .shippingAddressSnapshot(order.getShippingAddressSnapshot())
+                .paymentMethod(paymentMethod)
+                .paymentStatus(paymentStatus)
                 .createdAt(order.getCreatedAt())
                 .build();
     }
@@ -346,6 +380,14 @@ public class OrderService {
                 ? order.getPayments().getFirst().getGatewayOrderId()
                 : null;
 
+        String paymentMethod = "CASH_ON_DELIVERY";
+        String paymentStatus = "PENDING";
+        if (order.getPayments() != null && !order.getPayments().isEmpty()) {
+            Payment p = order.getPayments().getFirst();
+            paymentMethod = p.getPaymentMethod() != null ? p.getPaymentMethod().name() : "CASH_ON_DELIVERY";
+            paymentStatus = p.getStatus() != null ? p.getStatus().name() : "PENDING";
+        }
+
         return OrderDetailDto.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
@@ -366,6 +408,8 @@ public class OrderService {
                 .createdAt(order.getCreatedAt())
                 .items(itemDtos)
                 .razorpayOrderId(razorpayOrderId)
+                .paymentMethod(paymentMethod)
+                .paymentStatus(paymentStatus)
                 .build();
     }
 }
