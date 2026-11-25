@@ -297,9 +297,17 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDetailDto updateOrderStatusByAdmin(Long orderId, OrderStatus newStatus, String notes) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+    public OrderDetailDto updateOrderStatusByAdmin(String idOrOrderNumber, OrderStatus newStatus, String notes) {
+        Order order;
+        try {
+            Long numericId = Long.parseLong(idOrOrderNumber);
+            order = orderRepository.findById(numericId)
+                    .orElseGet(() -> orderRepository.findByOrderNumber(idOrOrderNumber)
+                            .orElseThrow(() -> new ResourceNotFoundException("Order", "id or orderNumber", idOrOrderNumber)));
+        } catch (NumberFormatException e) {
+            order = orderRepository.findByOrderNumber(idOrOrderNumber)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", idOrOrderNumber));
+        }
 
         OrderStatus oldStatus = order.getStatus();
         order.setStatus(newStatus);
@@ -307,8 +315,13 @@ public class OrderService {
             order.setCancellationReason(notes);
         }
         Order saved = orderRepository.save(order);
-        log.info("Admin updated order ID {} status from {} to {}. Notes: {}", orderId, oldStatus, newStatus, notes);
+        log.info("Admin updated order '{}' (ID {}) status from {} to {}. Notes: {}", idOrOrderNumber, saved.getId(), oldStatus, newStatus, notes);
         return mapToDetailDto(saved);
+    }
+
+    @Transactional
+    public OrderDetailDto updateOrderStatusByAdmin(Long orderId, OrderStatus newStatus, String notes) {
+        return updateOrderStatusByAdmin(String.valueOf(orderId), newStatus, notes);
     }
 
     private AdminOrderDto mapToAdminOrderDto(Order order) {

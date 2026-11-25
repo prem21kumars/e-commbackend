@@ -42,7 +42,7 @@ public class AdminOrderController {
     @PutMapping("/{id}/status")
     @Operation(summary = "Update Order Fulfillment Status", description = "Updates order progress to Processing, Shipped, Delivered, or Cancelled")
     public ResponseEntity<ApiResponse<OrderDetailDto>> updateOrderStatus(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody UpdateOrderStatusRequest request
     ) {
         OrderDetailDto updated = orderService.updateOrderStatusByAdmin(id, request.getStatus(), request.getNotes());
