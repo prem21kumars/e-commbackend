@@ -246,6 +246,15 @@ public class OrderService {
             throw new BadRequestException("Order cannot be cancelled in its current state: " + order.getStatus());
         }
 
+        // 1-day (24 hours) cancellation policy: Customers can only cancel within 24 hours of placement.
+        // After 24 hours, only an administrator can cancel or modify this order.
+        if (!isAdmin && order.getCreatedAt() != null) {
+            java.time.Instant oneDayAgo = java.time.Instant.now().minus(24, java.time.temporal.ChronoUnit.HOURS);
+            if (order.getCreatedAt().isBefore(oneDayAgo)) {
+                throw new BadRequestException("Order cancellation window has closed (available within 24 hours of placement). Only an administrator can cancel this order.");
+            }
+        }
+
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancellationReason(reason);
         Order updated = orderRepository.save(order);
