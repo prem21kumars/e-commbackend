@@ -306,7 +306,8 @@ public class AuthService {
         String pictureUrl = null;
 
         if (request.getIdToken().startsWith("mock_google_")) {
-            email = request.getIdToken().replace("mock_google_", "") + "@gmail.com";
+            String raw = request.getIdToken().substring("mock_google_".length()).trim();
+            email = raw.contains("@") ? raw : (raw + "@gmail.com");
             googleSub = "sub_" + HashUtils.sha256(email);
         } else {
             // Decoded JWT payload payload extraction or production Google client

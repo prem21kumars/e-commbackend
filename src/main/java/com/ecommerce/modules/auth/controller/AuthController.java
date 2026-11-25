@@ -80,6 +80,15 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("MFA successfully activated. Store recovery codes safely.", recoveryCodes));
     }
 
+    @PostMapping("/mfa/disable")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Disable MFA", description = "Disables TOTP MFA after verifying code")
+    public ResponseEntity<ApiResponse<Void>> disableMfa(@AuthenticationPrincipal UserPrincipal principal,
+                                                        @RequestParam String code) {
+        mfaService.disableMfa(principal.getId(), code);
+        return ResponseEntity.ok(ApiResponse.success("MFA disabled successfully", null));
+    }
+
     @PostMapping("/refresh-token")
     @Operation(summary = "Rotate Refresh Token", description = "Exchanges valid refresh token for new access and rotated refresh tokens")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request, HttpServletRequest httpRequest) {
